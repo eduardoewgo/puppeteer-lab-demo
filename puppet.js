@@ -3,7 +3,7 @@
 const puppeteer = require('puppeteer');
 
 (async () => {
-    const browser = await puppeteer.launch({headless: true});
+    const browser = await puppeteer.launch({headless: false});
     const page = await browser.newPage();
     await page.setViewport({ width: 1366, height: 768});
 
@@ -14,10 +14,22 @@ const puppeteer = require('puppeteer');
     await page.click('#btnSearch');
     await page.waitForNavigation();
 
-    let course = await page.evaluate(() => {
-        let divs = page.$$eval('div.gsc-expansionArea > div.gsc-result');
-        console.log(divs);
-    });
+    // SS time!
+    await page.screenshot({path: `results/ce-${new Date().getTime()}.png`, fullPage: true});
+
+    // Fetching values
+    let list = await page.$$('div.gsc-expansionArea > div.gsc-webResult.gsc-result');
+    let results = [];
+
+    for (let el of list) {
+        let result = {};
+        result.name = await el.$eval('a.gs-title', a => a.innerText);
+        result.link = await el.$eval('a.gs-title', a => a.href);
+        results.push(result);
+    }
+
+    // Compare with expected result
+    console.log(results);
 
     await browser.close();
 })();
